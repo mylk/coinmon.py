@@ -25,8 +25,9 @@ symbols = [] if not args.symbols else list(map(str.lower, args.symbols.split(','
 
 def get_data():
     response = requests.get('https://api.coincap.io/v2/assets?limit={}'.format(args.coins_count))
-    data = json.loads(response.text)['data']
-    return data
+    response = json.loads(response.text)
+
+    return response['data'] if 'data' in response else None
 
 
 def draw_table(data):
@@ -38,6 +39,9 @@ def draw_table(data):
     table.add_row(columns)
 
     for row in data:
+        if not all(key in row for key in ('name', 'symbol', 'priceUsd', 'changePercent24Hr')):
+            return None
+
         # no symbols selected or selected symbol matches the currently iterated
         if not symbols or (symbols and row['symbol'].lower() in symbols):
             table.add_row([
@@ -57,9 +61,13 @@ def handle_sigint(signal_received, frame):
 
 if __name__ == '__main__':
     if not args.update:
-        data = get_data()
-        table = draw_table(data)
+        try:
+            data = get_data()
+        except json.decoder.JSONDecodeError as ex:
+            print('ERROR: Cannot decode data - {}'.format(str(ex)))
+            sys.exit(0)
 
+        table = draw_table(data)
         print(table)
 
         sys.exit(0)
@@ -72,12 +80,24 @@ if __name__ == '__main__':
     curses.curs_set(0)
     
     while True:
-        data = get_data()
-        table = draw_table(data)
-
         last_update = datetime.now().strftime('%c')
-        screen.addstr(0, 0, last_update)
-        screen.addstr(2, 0, table)
+
+        data = None
+        try:
+            data = get_data()
+
+            table = None
+            if data:
+                table = draw_table(data)
+
+            if table:
+                screen.addstr(0, 0, last_update)
+                screen.addstr(2, 0, table)
+            else:
+                raise Exception('Cannot decode data')
+        except (Exception, json.decoder.JSONDecodeError) as ex:
+            screen.addstr(0, 0, 'ERROR: {} - {}'.format(str(ex), last_update))
+
         screen.refresh()
 
         time.sleep(args.interval)
