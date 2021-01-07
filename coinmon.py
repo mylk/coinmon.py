@@ -24,7 +24,11 @@ symbols = [] if not args.symbols else list(map(str.lower, args.symbols.split(','
 
 
 def get_data():
-    response = requests.get('https://api.coincap.io/v2/assets?limit={}'.format(args.coins_count))
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
+        'Accept-Encoding': 'gzip'
+    }
+    response = requests.get('https://api.coincap.io/v2/assets?limit={}'.format(args.coins_count), headers=headers)
     response = json.loads(response.text)
 
     return response['data'] if 'data' in response else None
