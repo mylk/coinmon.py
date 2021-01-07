@@ -96,11 +96,16 @@ if __name__ == '__main__':
 
             if table:
                 screen.addstr(0, 0, last_update)
+                screen.clrtoeol()
+                screen.addstr(1, 0, '')
+                screen.clrtoeol()
                 screen.addstr(2, 0, table)
+                screen.clrtoeol()
             else:
                 raise Exception('Cannot decode data')
         except (Exception, json.decoder.JSONDecodeError) as ex:
             screen.addstr(0, 0, 'ERROR: {} - {}'.format(str(ex), last_update))
+            screen.clrtoeol()
 
         screen.refresh()
 
