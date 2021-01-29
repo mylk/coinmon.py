@@ -28,7 +28,15 @@ def get_data():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
         'Accept-Encoding': 'gzip'
     }
-    response = requests.get('https://api.coincap.io/v2/assets?limit={}'.format(args.coins_count), headers=headers)
+
+    params = {
+        'limit': args.coins_count
+    }
+
+    if args.symbols:
+        del params['limit']
+
+    response = requests.get('https://api.coincap.io/v2/assets', params=params, headers=headers)
     response = json.loads(response.text)
 
     return response['data'] if 'data' in response else None
@@ -36,7 +44,7 @@ def get_data():
 
 def draw_table(data):
     table = texttable.Texttable()
-    table.set_cols_width([14, 10, 10])
+    table.set_cols_width([15, 10, 10])
     table.set_deco(show_borders)
 
     columns = ['NAME', 'PRICE ($)', 'CHANGE']
