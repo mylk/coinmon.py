@@ -37,9 +37,7 @@ def get_data():
         del params['limit']
 
     response = requests.get('https://api.coincap.io/v2/assets', params=params, headers=headers)
-    response = json.loads(response.text)
-
-    return response['data'] if 'data' in response else None
+    return response
 
 
 def draw_table(data):
@@ -74,10 +72,12 @@ def handle_sigint(signal_received, frame):
 if __name__ == '__main__':
     if not args.update:
         try:
-            data = get_data()
+            response_json = get_data()
+            response = json.loads(response_json.text)
+            data = response['data'] if 'data' in response else None
         except json.decoder.JSONDecodeError as ex:
-            print('ERROR: Cannot decode data - {}'.format(str(ex)))
-            sys.exit(0)
+            print('ERROR: Cannot decode data - {}. HTTP response: \"{}\"'.format(str(ex), response_json.text[0:70]))
+            sys.exit(1)
 
         table = draw_table(data)
         print(table)
@@ -96,7 +96,9 @@ if __name__ == '__main__':
 
         data = None
         try:
-            data = get_data()
+            response_json = get_data()
+            response = json.loads(response_json.text)
+            data = response['data'] if 'data' in response else None
 
             table = None
             if data:
@@ -112,7 +114,7 @@ if __name__ == '__main__':
             else:
                 raise Exception('Cannot decode data')
         except (Exception, json.decoder.JSONDecodeError) as ex:
-            screen.addstr(0, 0, 'ERROR: {} - {}'.format(str(ex), last_update))
+            screen.addstr(0, 0, '{} - ERROR: {}. HTTP response: \"{}\"'.format(last_update, str(ex), response_json.text[0:70]))
             screen.clrtoeol()
 
         screen.refresh()
